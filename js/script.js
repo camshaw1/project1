@@ -1,151 +1,73 @@
-// Google Maps Scripts
-var map = null;
-// When the window has finished loading create our google map below
-google.maps.event.addDomListener(window, 'load', init);
-google.maps.event.addDomListener(window, 'resize', function() {
-    map.setCenter(new google.maps.LatLng(40.6700, -73.9400));
-});
+/** NOTE: uses jQuery for quick & easy DOM manipulation **/
 
-function init() {
-    // Basic options for a simple Google Map
-    // For more options see: https://developers.google.com/maps/documentation/javascript/reference#MapOptions
-    var mapOptions = {
-        // How zoomed in you want the map to start at (always required)
-        zoom: 15,
+function getLocation() {
+  var msg;
 
-        // The latitude and longitude to center the map (always required)
-        center: new google.maps.LatLng(40.6700, -73.9400), // New York
+  /** 
+  first, test for feature support
+  **/
+  if ('geolocation' in navigator) {
+    // geolocation is supported :)
+    requestLocation();
+  } else {
+    // no geolocation :(
+    msg = "Sorry, looks like your browser doesn't support geolocation";
+    outputResult(msg); // output error message
+    $('.pure-button').removeClass('pure-button-primary').addClass('pure-button-success'); // change button style
+  }
 
-        // Disables the default Google Maps UI components
-        disableDefaultUI: true,
-        scrollwheel: false,
-        draggable: false,
+  /*** 
+  requestLocation() returns a message, either the users coordinates, or an error message
+  **/
+  function requestLocation() {
+    /**
+    getCurrentPosition() below accepts 3 arguments:
+    a success callback (required), an error callback  (optional), and a set of options (optional)
+    **/
 
-        // How you would like to style the map. 
-        // This is where you would paste any style found on Snazzy Maps.
-        styles: [{
-            "featureType": "water",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 17
-            }]
-        }, {
-            "featureType": "landscape",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 20
-            }]
-        }, {
-            "featureType": "road.highway",
-            "elementType": "geometry.fill",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 17
-            }]
-        }, {
-            "featureType": "road.highway",
-            "elementType": "geometry.stroke",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 29
-            }, {
-                "weight": 0.2
-            }]
-        }, {
-            "featureType": "road.arterial",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 18
-            }]
-        }, {
-            "featureType": "road.local",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 16
-            }]
-        }, {
-            "featureType": "poi",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 21
-            }]
-        }, {
-            "elementType": "labels.text.stroke",
-            "stylers": [{
-                "visibility": "on"
-            }, {
-                "color": "#000000"
-            }, {
-                "lightness": 16
-            }]
-        }, {
-            "elementType": "labels.text.fill",
-            "stylers": [{
-                "saturation": 36
-            }, {
-                "color": "#000000"
-            }, {
-                "lightness": 40
-            }]
-        }, {
-            "elementType": "labels.icon",
-            "stylers": [{
-                "visibility": "off"
-            }]
-        }, {
-            "featureType": "transit",
-            "elementType": "geometry",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 19
-            }]
-        }, {
-            "featureType": "administrative",
-            "elementType": "geometry.fill",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 20
-            }]
-        }, {
-            "featureType": "administrative",
-            "elementType": "geometry.stroke",
-            "stylers": [{
-                "color": "#000000"
-            }, {
-                "lightness": 17
-            }, {
-                "weight": 1.2
-            }]
-        }]
+    var options = {
+      // enableHighAccuracy = should the device take extra time or power to return a really accurate result, or should it give you the quick (but less accurate) answer?
+      enableHighAccuracy: false,
+      // timeout = how long does the device have, in milliseconds to return a result?
+      timeout: 5000,
+      // maximumAge = maximum age for a possible previously-cached position. 0 = must return the current position, not a prior cached position
+      maximumAge: 0
     };
 
-    // Get the HTML DOM element that will contain your map 
-    // We are using a div with id="map" seen below in the <body>
-    var mapElement = document.getElementById('map');
+    // call getCurrentPosition()
+    navigator.geolocation.getCurrentPosition(success, error, options);
 
-    // Create the Google Map using out element and options defined above
-    map = new google.maps.Map(mapElement, mapOptions);
+    // upon success, do this
+    function success(pos) {
+      // get longitude and latitude from the position object passed in
+      var lng = pos.coords.longitude;
+      var lat = pos.coords.latitude;
+      // and presto, we have the device's location!
+      msg = 'You appear to be at longitude: ' + lng + ' and latitude: ' + lat + '<img src="http://maps.googleapis.com/maps/api/staticmap?zoom=15&size=300x300&maptype=roadmap&markers=color:red%7Clabel:A%7C' + lat + ',' + lng + '&sensor=false">';
+      outputResult(msg); // output message
+      $('.pure-button').removeClass('pure-button-primary').addClass('pure-button-success'); // change button style
+    }
 
-    // Custom Map Marker Icon - Customize the map-marker.png file to customize your icon
-    var image = 'img/map-marker.png';
-    var myLatLng = new google.maps.LatLng(40.6700, -73.9400);
-    var beachMarker = new google.maps.Marker({
-        position: myLatLng,
-        map: map,
-        icon: image
-    });
-}
+    // upon error, do this
+    function error(err) {
+      // return the error message
+      msg = 'Error: ' + err + ' :(';
+      outputResult(msg); // output button
+      $('.pure-button').removeClass('pure-button-primary').addClass('pure-button-error'); // change button style
+    }
+  } // end requestLocation();
+
+  /*** 
+  outputResult() inserts msg into the DOM  
+  **/
+  function outputResult(msg) {
+    $('.result').addClass('result').html(msg);
+  }
+} // end getLocation()
+
+// attach getLocation() to button click
+$('.pure-button').on('click', function() {
+  // show spinner while getlocation() does its thing
+  $('.result').html('<i class="fa fa-spinner fa-spin"></i>');
+  getLocation();
+});
